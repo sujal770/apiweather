@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather App</title>
+    <style>
+
+
+/* link which i follow during this coding */
+
+/* https://www.youtube.com/watch?v=74IOjtVvExY */
+
+@import url('https://fonts.googleapis.com/css2?family=Anton+SC&display=swap');
+body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background: rgb(206, 241, 255);
+}
+h1 {
+    font-family: "Anton SC", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+}
+
+h1 span:nth-child(1) {
+    color: rgb(41, 41, 95); 
+}
+
+h1 span:nth-child(2) {
+    color: red; 
+}
+        .weather {
+            margin-top:20px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: inline-block;
+        }
+        .error {
+            color: red;
+        }
+        nav img{
+            width: 10%;
+        }
+        .text-box{
+            display: flex;
+            align-items: center;
+            margin-left: 40%;
+            gap: 10px;
+        }
+        .text-box button{
+            padding: 10px;
+            background-color: aquamarine;
+            outline: none;
+            border: 1px solid antiquewhite;
+            border-radius: 5px;
+            border-color: aquamarine;
+        }
+        .text-box button:hover{
+            cursor: pointer;
+            background-color: rgb(185, 232, 217);
+        }
+        input{
+            height: 20%;
+            width: 20%;
+            padding: 10px;
+        }
+    .saved-weather {
+            margin-top: 20px;
+        }
+    .saved-card{
+    overflow: hidden;
+    margin: 20px;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+.card {
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+  max-width: 300px;
+  margin: auto;
+  text-align: center;
+  font-family: arial;
+  background-color: white;
+  border-radius: 5px;
+}
+    </style>
+</head>
+<body>
+    <nav>
+        <img src="https://uxwing.com/wp-content/themes/uxwing/download/weather/weather-icon.png">
+    </nav>
+    <h1>
+        <span>Weather</span>
+        <span>Detail</span>
+    </h1>
+        <div class="text-box">
+        <input type="text" id="city" placeholder="Enter city name">
+        <button onclick="getWeather()">Get Weather</button>
+        <button onclick="clearAllSavedWeather()">Clear All</button>
+
+    </div>
+    <div id="result" class="weather"></div>
+    <div class="saved-weather">
+        <h2>Pinned Weather</h2>
+        <div id="saved-cards"></div>
+    </div>
+
+    <script>
+        const API_KEY = "51dc3a31adba516e85c37af1691d16e9";
+
+        function loadSavedWeather() {
+            const savedWeather = JSON.parse(localStorage.getItem("weatherCards")) || [];
+            const savedCardsDiv = document.getElementById("saved-cards");
+            savedCardsDiv.innerHTML = savedWeather.map(card => `
+                <div class="card">
+                    <h2>${card.name}, ${card.country}</h2>
+                    <p>Temperature: ${card.temp}°C</p>
+                    <p>Weather: ${card.description}</p>
+                    <p>Humidity: ${card.humidity}%</p>
+                </div>
+            `).join("");
+        }
+
+        async function getWeather() {
+            const city = document.getElementById("city").value;
+            const resultDiv = document.getElementById("result");
+
+            if (!city) {
+                resultDiv.innerHTML = '<p class="error">Please enter a city name.</p>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}`);
+                
+                if (!response.ok) {
+                    throw new Error("City not found or API limit reached.");
+                }
+
+                const data = await response.json();
+                resultDiv.innerHTML = `
+                    <h2>${data.name}, ${data.sys.country}</h2>
+                    <p>Temperature: ${data.main.temp}°C</p>
+                    <p>Weather: ${data.weather[0].description}</p>
+                    <p>Humidity: ${data.main.humidity}%</p>
+                    <button onclick="saveWeather('${data.name}', '${data.sys.country}', '${data.main.temp}', '${data.weather[0].description}', '${data.main.humidity}')">Pin Weather</button>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+            }
+        }
+
+        function saveWeather(name, country, temp, description, humidity) {
+            const savedWeather = JSON.parse(localStorage.getItem("weatherCards")) || [];
+            savedWeather.push({ name, country, temp, description, humidity });
+            localStorage.setItem("weatherCards", JSON.stringify(savedWeather));
+            loadSavedWeather();
+        }
+        function clearAllSavedWeather() {
+    localStorage.removeItem("weatherCards");
+    document.getElementById("saved-cards").innerHTML = "";
+    alert("Now all the Saved weather will be Clear.");
+}
+        window.onload = loadSavedWeather;
+    </script>
+</body>
+</html>
